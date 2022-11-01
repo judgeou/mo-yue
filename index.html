@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>与魔论法</title>
+
+  <style>
+    .big-btn {
+      width: 200px;
+      height: 64px;
+      font-size: 130%;
+    }
+  </style>
+</head>
+<body>
+  <h1>与魔论法</h1>
+  <p>
+    <b>小心，魔不懂中文</b>
+  </p>
+  <div>
+    <textarea id="src_text" cols="80" rows="10"></textarea>
+  </div>
+
+  <div>
+    <button onclick="listen_devil()" class="big-btn">听魔说</button>
+  </div>
+
+  <script>
+    function encrypt_text (text) {
+      function nan_to_zero (n) {
+        return isNaN(n) ? 0 : n
+      }
+
+      const offset = 0x2200
+
+      let secret_char_arr = []
+      let secret_code_arr = []
+
+      for (let i = 0; i < text.length; i += 2) {
+        const code_1 = nan_to_zero(text.charCodeAt(i))
+        const code_2 = nan_to_zero(text.charCodeAt(i + 1))
+
+        const merge_code = code_2 + (code_1 * 16 * 16) + offset
+        
+        secret_code_arr.push(merge_code.toString(16))
+        secret_char_arr.push(String.fromCharCode(merge_code))
+      }
+
+      const secret_text = secret_char_arr.join('')
+      return secret_text
+    }
+
+    function decrypt_text (text) {
+      const offset = 0x2200
+      
+      let plain_code_arr = []
+      let plain_char_arr = []
+
+      for (let i = 0; i < text.length; i++) {
+        const secret_code = text.charCodeAt(i) - offset
+        const code_1 = secret_code >> 8
+        const code_2 = secret_code - (code_1 << 8)
+
+        plain_code_arr.push(code_1.toString(16))
+        plain_char_arr.push(String.fromCharCode(code_1))
+
+        if (code_2 !== 0) {
+          plain_code_arr.push(code_2.toString(16))
+          plain_char_arr.push(String.fromCharCode(code_2))
+        }
+      }
+
+      const plain_text = plain_char_arr.join('')
+      return plain_text
+    }
+
+    function listen_devil () {
+      const $ = (selector) => document.querySelector(selector)
+      const src_text = $('#src_text').value
+
+      const regex1 = /^魔曰：(.+)/
+      const matchs = src_text.match(regex1)
+
+      if (matchs && matchs[1]) {
+        const plain_text = decrypt_text(matchs[1])
+        const show_text = plain_text
+
+        $('#src_text').value = (show_text)
+      } else {
+        const secret_text = encrypt_text(src_text)
+        const show_text = `魔曰：${secret_text}`
+
+        $('#src_text').value = (show_text)
+      }
+
+    }
+  </script>
+</body>
+</html>
